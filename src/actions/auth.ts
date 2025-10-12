@@ -46,8 +46,7 @@ export async function signUp(formData: FormData) {
   if (error) {
     console.error('Sign up error details:', {
       message: error.message,
-      status: error.status,
-      statusText: error.statusText
+      status: error.status
     })
     
     let errorMessage = 'ユーザーを作成できませんでした'
