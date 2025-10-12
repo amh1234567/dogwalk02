@@ -1,15 +1,19 @@
-import MainVisual from './_components/MainVisual'
-import DogWalkForm from './_components/DogWalkForm'
+import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
 
-export default function Home() {
-  return (
-    <div className="min-h-screen">
-      <MainVisual />
-      <div className="py-12">
-        <div className="max-w-4xl mx-auto px-4">
-          <DogWalkForm />
-        </div>
-      </div>
-    </div>
-  )
+export default async function Home() {
+  const supabase = createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    redirect('/login')
+  }
+
+  // 認証済みユーザーはダッシュボードにリダイレクト
+  redirect('/dashboard')
 }
+
+

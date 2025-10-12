@@ -10,3 +10,4 @@ export interface DogWalkFormData {
   walk_date: string
   walk_time: string
 }
+

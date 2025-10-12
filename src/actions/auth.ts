@@ -1,0 +1,85 @@
+'use server'
+
+import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
+
+export async function signIn(formData: FormData) {
+  const supabase = createClient()
+
+  const data = {
+    email: formData.get('email') as string,
+    password: formData.get('password') as string,
+  }
+
+  const { error } = await supabase.auth.signInWithPassword(data)
+
+  if (error) {
+    redirect('/login?message=Could not authenticate user')
+  }
+
+  revalidatePath('/', 'layout')
+  redirect('/dashboard')
+}
+
+export async function signUp(formData: FormData) {
+  const supabase = createClient()
+
+  const data = {
+    email: formData.get('email') as string,
+    password: formData.get('password') as string,
+  }
+
+  // バリデーション
+  if (!data.email || !data.password) {
+    redirect('/login?message=メールアドレスとパスワードを入力してください')
+  }
+
+  if (data.password.length < 6) {
+    redirect('/login?message=パスワードは6文字以上で入力してください')
+  }
+
+  const { data: signUpData, error } = await supabase.auth.signUp(data)
+
+  console.log('Sign up response:', { signUpData, error })
+
+  if (error) {
+    console.error('Sign up error details:', {
+      message: error.message,
+      status: error.status,
+      statusText: error.statusText
+    })
+    
+    let errorMessage = 'ユーザーを作成できませんでした'
+    
+    if (error.message.includes('already registered') || error.message.includes('already been registered')) {
+      errorMessage = 'このメールアドレスは既に登録されています'
+    } else if (error.message.includes('Invalid email')) {
+      errorMessage = '有効なメールアドレスを入力してください'
+    } else if (error.message.includes('Password should be at least')) {
+      errorMessage = 'パスワードは6文字以上で入力してください'
+    } else if (error.message.includes('Unable to validate email address')) {
+      errorMessage = 'メールアドレスの形式が正しくありません'
+    } else if (error.message.includes('Signup is disabled')) {
+      errorMessage = '新規登録が無効になっています。管理者にお問い合わせください'
+    } else if (error.message.includes('Invalid API key')) {
+      errorMessage = 'APIキーが無効です。設定を確認してください'
+    } else if (error.message.includes('Failed to fetch')) {
+      errorMessage = 'ネットワークエラーが発生しました。接続を確認してください'
+    } else {
+      errorMessage = `エラー: ${error.message}`
+    }
+    
+    redirect(`/login?message=${encodeURIComponent(errorMessage)}`)
+  }
+
+  revalidatePath('/', 'layout')
+  redirect('/login?message=確認メールを送信しました。メールボックスを確認してください。')
+}
+
+export async function signOut() {
+  const supabase = createClient()
+  await supabase.auth.signOut()
+  revalidatePath('/', 'layout')
+  redirect('/login')
+}

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/client'
 import { DogWalkFormData } from '@/types'
 import LoadingSpinner from '@/components/LoadingSpinner'
 
@@ -19,6 +19,7 @@ export default function DogWalkForm() {
     setMessage('')
 
     try {
+      const supabase = createClient()
       const { error } = await supabase
         .from('dog_walks')
         .insert([formData])
