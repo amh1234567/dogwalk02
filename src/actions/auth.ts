@@ -78,7 +78,7 @@ export async function signUp(formData: FormData) {
   }
 
   revalidatePath('/', 'layout')
-  redirect('/register?message=確認メールを送信しました。メールボックスを確認してください。')
+  redirect('/register-success')
 }
 
 export async function signOut() {
