@@ -28,15 +28,20 @@ export async function signUp(formData: FormData) {
   const data = {
     email: formData.get('email') as string,
     password: formData.get('password') as string,
+    confirmPassword: formData.get('confirmPassword') as string,
   }
 
   // バリデーション
   if (!data.email || !data.password) {
-    redirect('/login?message=メールアドレスとパスワードを入力してください')
+    redirect('/register?message=メールアドレスとパスワードを入力してください')
   }
 
   if (data.password.length < 6) {
-    redirect('/login?message=パスワードは6文字以上で入力してください')
+    redirect('/register?message=パスワードは6文字以上で入力してください')
+  }
+
+  if (data.password !== data.confirmPassword) {
+    redirect('/register?message=パスワードが一致しません')
   }
 
   const { data: signUpData, error } = await supabase.auth.signUp(data)
@@ -69,11 +74,11 @@ export async function signUp(formData: FormData) {
       errorMessage = `エラー: ${error.message}`
     }
     
-    redirect(`/login?message=${encodeURIComponent(errorMessage)}`)
+    redirect(`/register?message=${encodeURIComponent(errorMessage)}`)
   }
 
   revalidatePath('/', 'layout')
-  redirect('/login?message=確認メールを送信しました。メールボックスを確認してください。')
+  redirect('/register?message=確認メールを送信しました。メールボックスを確認してください。')
 }
 
 export async function signOut() {
