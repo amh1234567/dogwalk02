@@ -12,12 +12,36 @@ export async function signIn(formData: FormData) {
     password: formData.get('password') as string,
   }
 
-  const { error } = await supabase.auth.signInWithPassword(data)
+  console.log('Sign in attempt:', { email: data.email, passwordLength: data.password?.length })
+
+  const { data: signInData, error } = await supabase.auth.signInWithPassword(data)
+
+  console.log('Sign in response:', { signInData, error })
 
   if (error) {
-    redirect('/login?message=Could not authenticate user')
+    console.error('Sign in error details:', {
+      message: error.message,
+      status: error.status
+    })
+    
+    let errorMessage = 'ログインに失敗しました'
+    
+    if (error.message.includes('Invalid login credentials')) {
+      errorMessage = 'メールアドレスまたはパスワードが正しくありません'
+    } else if (error.message.includes('Email not confirmed')) {
+      errorMessage = 'メールアドレスが確認されていません。確認メールをチェックしてください'
+    } else if (error.message.includes('User not found')) {
+      errorMessage = 'このメールアドレスは登録されていません'
+    } else if (error.message.includes('Invalid email')) {
+      errorMessage = '有効なメールアドレスを入力してください'
+    } else {
+      errorMessage = `エラー: ${error.message}`
+    }
+    
+    redirect(`/login?message=${encodeURIComponent(errorMessage)}`)
   }
 
+  console.log('Sign in successful, redirecting to dashboard')
   revalidatePath('/', 'layout')
   redirect('/dashboard')
 }
@@ -46,7 +70,19 @@ export async function signUp(formData: FormData) {
 
   const { data: signUpData, error } = await supabase.auth.signUp(data)
 
-  console.log('Sign up response:', { signUpData, error })
+  console.log('Sign up response:', { 
+    user: signUpData?.user ? {
+      id: signUpData.user.id,
+      email: signUpData.user.email,
+      email_confirmed_at: signUpData.user.email_confirmed_at,
+      created_at: signUpData.user.created_at
+    } : null,
+    session: signUpData?.session ? 'Session created' : 'No session',
+    error: error ? {
+      message: error.message,
+      status: error.status
+    } : null
+  })
 
   if (error) {
     console.error('Sign up error details:', {
