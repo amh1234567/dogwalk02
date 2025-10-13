@@ -15,6 +15,15 @@ export default async function DebugPage() {
   // ユーザー情報確認
   const { data: userData, error: userError } = await supabase.auth.getUser()
   
+  // 全ユーザー一覧を取得（管理者権限が必要）
+  let allUsers = null
+  try {
+    const { data: users, error: usersError } = await supabase.auth.admin.listUsers()
+    allUsers = users
+  } catch (error) {
+    console.log('Admin access not available:', error)
+  }
+  
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
@@ -67,6 +76,24 @@ export default async function DebugPage() {
             </div>
           </div>
           
+          {/* 全ユーザー一覧 */}
+          {allUsers && (
+            <div className="bg-white shadow rounded-lg p-6">
+              <h2 className="text-xl font-semibold mb-4">登録済みユーザー一覧</h2>
+              <div className="space-y-2">
+                {allUsers.users.map((user: any) => (
+                  <div key={user.id} className="border rounded p-3">
+                    <p><strong>ID:</strong> {user.id}</p>
+                    <p><strong>メール:</strong> {user.email}</p>
+                    <p><strong>確認済み:</strong> {user.email_confirmed_at ? 'はい' : 'いいえ'}</p>
+                    <p><strong>作成日時:</strong> {user.created_at}</p>
+                    <p><strong>最終ログイン:</strong> {user.last_sign_in_at || 'なし'}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
           {/* 推奨アクション */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
             <h2 className="text-xl font-semibold mb-4 text-blue-800">推奨アクション</h2>
@@ -80,6 +107,8 @@ export default async function DebugPage() {
               {!userData.user ? (
                 <p>• ユーザーがログインしていません。ログインを試してください</p>
               ) : null}
+              <p>• ログアウト後にログインできない場合は、メール確認が必要な可能性があります</p>
+              <p>• Supabaseダッシュボードで「Authentication → Settings → Enable email confirmations」をオフにしてください</p>
             </div>
           </div>
         </div>

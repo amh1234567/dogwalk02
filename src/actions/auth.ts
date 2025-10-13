@@ -16,7 +16,19 @@ export async function signIn(formData: FormData) {
 
   const { data: signInData, error } = await supabase.auth.signInWithPassword(data)
 
-  console.log('Sign in response:', { signInData, error })
+  console.log('Sign in response:', { 
+    user: signInData?.user ? {
+      id: signInData.user.id,
+      email: signInData.user.email,
+      email_confirmed_at: signInData.user.email_confirmed_at,
+      created_at: signInData.user.created_at
+    } : null,
+    session: signInData?.session ? 'Session created' : 'No session',
+    error: error ? {
+      message: error.message,
+      status: error.status
+    } : null
+  })
 
   if (error) {
     console.error('Sign in error details:', {
