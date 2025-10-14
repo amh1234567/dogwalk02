@@ -129,6 +129,87 @@ export async function signUp(formData: FormData) {
   redirect('/register-success')
 }
 
+export async function resetPassword(formData: FormData) {
+  const supabase = createClient()
+
+  const email = formData.get('email') as string
+
+  if (!email) {
+    redirect('/forgot-password?message=メールアドレスを入力してください')
+  }
+
+  console.log('Password reset request for email:', email)
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3001'}/reset-password`,
+  })
+
+  if (error) {
+    console.error('Password reset error:', error)
+    
+    let errorMessage = 'パスワード再設定メールの送信に失敗しました'
+    
+    if (error.message.includes('Invalid email')) {
+      errorMessage = '有効なメールアドレスを入力してください'
+    } else if (error.message.includes('User not found')) {
+      errorMessage = 'このメールアドレスは登録されていません'
+    } else if (error.message.includes('Rate limit exceeded')) {
+      errorMessage = '送信回数が上限に達しました。しばらく時間をおいてから再度お試しください'
+    } else {
+      errorMessage = `エラー: ${error.message}`
+    }
+    
+    redirect(`/forgot-password?message=${encodeURIComponent(errorMessage)}`)
+  }
+
+  console.log('Password reset email sent successfully')
+  redirect('/forgot-password?message=パスワード再設定メールを送信しました。メールをご確認ください。')
+}
+
+export async function updatePassword(formData: FormData) {
+  const supabase = createClient()
+
+  const password = formData.get('password') as string
+  const confirmPassword = formData.get('confirmPassword') as string
+
+  if (!password || !confirmPassword) {
+    redirect('/reset-password?message=パスワードを入力してください')
+  }
+
+  if (password.length < 6) {
+    redirect('/reset-password?message=パスワードは6文字以上で入力してください')
+  }
+
+  if (password !== confirmPassword) {
+    redirect('/reset-password?message=パスワードが一致しません')
+  }
+
+  console.log('Updating password for user')
+
+  const { error } = await supabase.auth.updateUser({
+    password: password
+  })
+
+  if (error) {
+    console.error('Password update error:', error)
+    
+    let errorMessage = 'パスワードの更新に失敗しました'
+    
+    if (error.message.includes('Password should be at least')) {
+      errorMessage = 'パスワードは6文字以上で入力してください'
+    } else if (error.message.includes('Invalid password')) {
+      errorMessage = '無効なパスワードです'
+    } else {
+      errorMessage = `エラー: ${error.message}`
+    }
+    
+    redirect(`/reset-password?message=${encodeURIComponent(errorMessage)}`)
+  }
+
+  console.log('Password updated successfully')
+  redirect('/login?message=パスワードが正常に更新されました。新しいパスワードでログインしてください。')
+}
+
 export async function signOut() {
   const supabase = createClient()
   await supabase.auth.signOut()
