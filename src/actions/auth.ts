@@ -80,7 +80,12 @@ export async function signUp(formData: FormData) {
     redirect('/register?message=パスワードが一致しません')
   }
 
-  const { data: signUpData, error } = await supabase.auth.signUp(data)
+  const { data: signUpData, error } = await supabase.auth.signUp({
+    ...data,
+    options: {
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3001'}/auth/callback`,
+    },
+  })
 
   console.log('Sign up response:', { 
     user: signUpData?.user ? {
@@ -141,7 +146,7 @@ export async function resetPassword(formData: FormData) {
   console.log('Password reset request for email:', email)
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3001'}/reset-password`,
+    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3001'}/auth/callback?next=/reset-password`,
   })
 
   if (error) {
