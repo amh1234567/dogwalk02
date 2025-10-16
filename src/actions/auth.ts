@@ -4,6 +4,22 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 
+// 環境変数からベースURLを取得する関数
+function getBaseUrl() {
+  // 本番環境（Vercel）の場合
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+  
+  // カスタムドメインが設定されている場合
+  if (process.env.NEXT_PUBLIC_SITE_URL) {
+    return process.env.NEXT_PUBLIC_SITE_URL;
+  }
+  
+  // 開発環境のデフォルト
+  return 'http://localhost:3000';
+}
+
 export async function signIn(formData: FormData) {
   const supabase = createClient()
 
@@ -80,10 +96,20 @@ export async function signUp(formData: FormData) {
     redirect('/register?message=パスワードが一致しません')
   }
 
+  const baseUrl = getBaseUrl()
+  const redirectUrl = `${baseUrl}/auth/callback`
+  
+  console.log('Sign up redirect URL:', redirectUrl)
+  console.log('Environment variables:', {
+    VERCEL_URL: process.env.VERCEL_URL,
+    NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
+    NODE_ENV: process.env.NODE_ENV
+  })
+  
   const { data: signUpData, error } = await supabase.auth.signUp({
     ...data,
     options: {
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3001'}/auth/callback`,
+      emailRedirectTo: redirectUrl,
     },
   })
 
@@ -145,8 +171,9 @@ export async function resetPassword(formData: FormData) {
 
   console.log('Password reset request for email:', email)
 
+  const baseUrl = getBaseUrl()
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3001'}/auth/callback?next=/reset-password`,
+    redirectTo: `${baseUrl}/auth/callback?next=/reset-password`,
   })
 
   if (error) {
