@@ -1,3 +1,4 @@
+import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
 export async function GET(request: Request) {
@@ -17,9 +18,38 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${origin}/reset-password`)
   }
 
-  // それ以外は認証完了画面にリダイレクト
+  // メール認証の場合
+  if (code) {
+    try {
+      const supabase = createClient()
+      const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+      
+      console.log('Auth exchange result:', {
+        user: data?.user ? 'User found' : 'No user',
+        session: data?.session ? 'Session created' : 'No session',
+        error: error ? error.message : 'No error'
+      })
+      
+      if (error) {
+        console.error('Auth exchange error:', error)
+        // エラーの場合はログインページにリダイレクト
+        return NextResponse.redirect(`${origin}/login?message=認証に失敗しました。再度お試しください。`)
+      }
+      
+      if (data?.user && data?.session) {
+        console.log('User authenticated successfully, redirecting to dashboard')
+        // 認証成功時はダッシュボードにリダイレクト
+        return NextResponse.redirect(`${origin}/dashboard`)
+      }
+    } catch (error) {
+      console.error('Auth exchange exception:', error)
+      return NextResponse.redirect(`${origin}/login?message=認証処理中にエラーが発生しました。`)
+    }
+  }
+
+  // コードがない場合は認証完了画面にリダイレクト
   const redirectUrl = `${origin}/auth-success`
-  console.log('Redirecting to auth success page:', redirectUrl)
+  console.log('No code present, redirecting to auth success page:', redirectUrl)
   console.log('=== AUTH CALLBACK END ===')
   
   return NextResponse.redirect(redirectUrl)
