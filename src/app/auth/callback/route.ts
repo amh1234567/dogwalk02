@@ -11,7 +11,8 @@ export async function GET(request: Request) {
     code: code ? 'present' : 'missing',
     next,
     origin,
-    searchParams: Object.fromEntries(searchParams.entries())
+    searchParams: Object.fromEntries(searchParams.entries()),
+    environment: process.env.NODE_ENV
   })
 
   if (code) {
