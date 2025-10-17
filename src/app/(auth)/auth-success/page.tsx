@@ -9,12 +9,12 @@ export default function AuthSuccessPage() {
   const router = useRouter()
 
   useEffect(() => {
-    // 3秒のカウントダウン後にダッシュボードにリダイレクト
+    // 3秒のカウントダウン後にログインページにリダイレクト
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(timer)
-          router.push('/dashboard')
+          router.push('/login')
           return 0
         }
         return prev - 1
@@ -48,7 +48,7 @@ export default function AuthSuccessPage() {
           <div className="flex flex-col items-center space-y-4">
             <LoadingSpinner size="lg" />
             <p className="text-sm text-gray-500">
-              ダッシュボードに移動しています...
+              ログインページに移動しています...
             </p>
             <p className="text-xs text-gray-400">
               {countdown}秒後に自動的に移動します
