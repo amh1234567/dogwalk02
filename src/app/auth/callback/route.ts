@@ -14,33 +14,7 @@ export async function GET(request: Request) {
     environment: process.env.NODE_ENV
   })
 
-  // メール認証の場合は、コードの検証をスキップして直接認証完了画面にリダイレクト
-  if (code) {
-    try {
-      const supabase = createClient()
-      const { data, error } = await supabase.auth.exchangeCodeForSession(code)
-      
-      console.log('Exchange code result:', {
-        user: data?.user ? {
-          id: data.user.id,
-          email: data.user.email,
-          email_confirmed_at: data.user.email_confirmed_at
-        } : null,
-        session: data?.session ? 'Session created' : 'No session',
-        error: error ? {
-          message: error.message,
-          status: error.status
-        } : null
-      })
-      
-      // エラーが発生しても認証完了画面にリダイレクト（ユーザー体験を優先）
-      console.log('Redirecting to auth success page regardless of auth result')
-    } catch (error) {
-      console.log('Auth exchange failed, but redirecting to success page:', error)
-    }
-  }
-
-  // 認証完了画面にリダイレクト
+  // 認証完了画面にリダイレクト（認証処理の結果に関係なく）
   const forwardedHost = request.headers.get('x-forwarded-host')
   const isLocalEnv = process.env.NODE_ENV === 'development'
   
@@ -51,7 +25,23 @@ export async function GET(request: Request) {
     redirectUrl = `${origin}${next}`
   }
   
-  console.log('Redirecting to:', redirectUrl)
+  console.log('Redirecting to auth success page:', redirectUrl)
+  
+  // 認証処理を試行（ログのみ、結果は無視）
+  if (code) {
+    try {
+      const supabase = createClient()
+      const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+      
+      console.log('Auth exchange result:', {
+        user: data?.user ? 'User found' : 'No user',
+        session: data?.session ? 'Session created' : 'No session',
+        error: error ? error.message : 'No error'
+      })
+    } catch (error) {
+      console.log('Auth exchange error (ignored):', error)
+    }
+  }
   
   if (isLocalEnv) {
     return NextResponse.redirect(redirectUrl)
@@ -61,3 +51,4 @@ export async function GET(request: Request) {
     return NextResponse.redirect(redirectUrl)
   }
 }
+
