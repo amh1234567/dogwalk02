@@ -37,8 +37,8 @@ export async function GET(request: Request) {
       }
       
       if (data?.user && data?.session) {
-        console.log('User authenticated successfully, redirecting to dashboard')
-        // 認証成功時はダッシュボードにリダイレクト
+        console.log('User authenticated successfully, redirecting to success page')
+        // 認証成功時は成功ページにリダイレクト
         return NextResponse.redirect(`${origin}/success`)
       }
     } catch (error) {
