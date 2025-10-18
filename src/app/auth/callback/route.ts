@@ -39,7 +39,7 @@ export async function GET(request: Request) {
       if (data?.user && data?.session) {
         console.log('User authenticated successfully, redirecting to dashboard')
         // 認証成功時はダッシュボードにリダイレクト
-        return NextResponse.redirect(`${origin}/dashboard`)
+        return NextResponse.redirect(`${origin}/success`)
       }
     } catch (error) {
       console.error('Auth exchange exception:', error)
@@ -47,11 +47,10 @@ export async function GET(request: Request) {
     }
   }
 
-  // コードがない場合は認証完了画面にリダイレクト
-  const redirectUrl = `${origin}/auth-success`
-  console.log('No code present, redirecting to auth success page:', redirectUrl)
+  // コードがない場合はログインページにリダイレクト
+  console.log('No code present, redirecting to login page')
   console.log('=== AUTH CALLBACK END ===')
   
-  return NextResponse.redirect(redirectUrl)
+  return NextResponse.redirect(`${origin}/login?message=認証コードが見つかりません。`)
 }
 
