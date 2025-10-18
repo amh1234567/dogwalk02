@@ -20,31 +20,52 @@ export async function GET(request: Request) {
 
   // メール認証の場合
   if (code) {
+    console.log('=== EMAIL AUTH PROCESSING ===')
+    console.log('Code received:', code.substring(0, 10) + '...')
+    
     try {
       const supabase = createClient()
+      console.log('Supabase client created, attempting code exchange...')
+      
       const { data, error } = await supabase.auth.exchangeCodeForSession(code)
       
       console.log('Auth exchange result:', {
-        user: data?.user ? 'User found' : 'No user',
+        user: data?.user ? {
+          id: data.user.id,
+          email: data.user.email,
+          email_confirmed_at: data.user.email_confirmed_at
+        } : 'No user',
         session: data?.session ? 'Session created' : 'No session',
-        error: error ? error.message : 'No error'
+        error: error ? {
+          message: error.message,
+          status: error.status
+        } : 'No error'
       })
       
       if (error) {
         console.error('Auth exchange error:', error)
-        // エラーの場合はログインページにリダイレクト
+        console.log('Redirecting to login with error message')
         return NextResponse.redirect(`${origin}/login?message=認証に失敗しました。再度お試しください。`)
       }
       
       if (data?.user && data?.session) {
-        console.log('User authenticated successfully, redirecting to success page')
-        // 認証成功時は成功ページにリダイレクト
+        console.log('✅ User authenticated successfully!')
+        console.log('User ID:', data.user.id)
+        console.log('User Email:', data.user.email)
+        console.log('Redirecting to success page:', `${origin}/success`)
         return NextResponse.redirect(`${origin}/success`)
+      } else {
+        console.log('❌ Authentication failed: No user or session')
+        console.log('User data:', data?.user)
+        console.log('Session data:', data?.session)
+        return NextResponse.redirect(`${origin}/login?message=認証に失敗しました。`)
       }
     } catch (error) {
       console.error('Auth exchange exception:', error)
       return NextResponse.redirect(`${origin}/login?message=認証処理中にエラーが発生しました。`)
     }
+  } else {
+    console.log('❌ No code parameter found in URL')
   }
 
   // コードがない場合はログインページにリダイレクト
