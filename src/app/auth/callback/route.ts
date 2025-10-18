@@ -52,8 +52,8 @@ export async function GET(request: Request) {
         console.log('✅ User authenticated successfully!')
         console.log('User ID:', data.user.id)
         console.log('User Email:', data.user.email)
-        console.log('Redirecting to success page:', `${origin}/success`)
-        return NextResponse.redirect(`${origin}/success`)
+        console.log('Redirecting to dashboard:', `${origin}/dashboard`)
+        return NextResponse.redirect(`${origin}/dashboard`)
       } else {
         console.log('❌ Authentication failed: No user or session')
         console.log('User data:', data?.user)
